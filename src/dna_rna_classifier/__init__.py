@@ -4,6 +4,7 @@ __all__ = [
     "features",
     "modeling",
     "mutation",
+    "mutation_sensitivity",
     "promoter_dataset",
     "validation",
 ]

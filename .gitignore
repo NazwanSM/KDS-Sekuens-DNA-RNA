@@ -6,6 +6,7 @@ models/*.joblib
 models/*.pkl
 models/*.json
 reports/evaluation/
+reports/mutation_sensitivity/
 data/processed/
 data/raw/
 .cache/

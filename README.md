@@ -1,4 +1,4 @@
-# DNA/RNA Sequence Function Classifier + Mutation Explainer
+# Klasifikasi Promoter DNA dan Analisis Sensitivitas Mutasi Berbasis k-mer
 
 Project IF3211 Domain-Specific Computation dengan topik **Sekuens DNA & RNA**.
 
@@ -10,6 +10,14 @@ Model utama pada proyek ini adalah **binary promoter classification**:
   - `1 = promoter`
 
 Aplikasi juga menyediakan utilitas biologis untuk sequence analysis, central dogma, ORF detection, mutation explainer, dan Needleman-Wunsch alignment.
+
+Research question utama:
+
+> Bagaimana model berbasis k-mer dapat mengklasifikasikan sekuens DNA promoter dan non-promoter, serta bagaimana mutasi titik pada sekuens dapat memengaruhi probabilitas prediksi promoter?
+
+Kontribusi utama:
+
+> Proyek ini mengintegrasikan klasifikasi promoter berbasis k-mer dengan analisis sensitivitas mutasi in-silico sehingga hasil model tidak hanya berupa label prediksi, tetapi juga interpretasi posisi dan pola sekuens yang paling memengaruhi prediksi.
 
 ## Dataset
 
@@ -127,6 +135,44 @@ data/processed/promoter_all_test.csv
 
 Use the **Load random real test sequence** button after downloading the dataset.
 
+## Promoter Mutation Sensitivity Analyzer
+
+Fitur ini melakukan in-silico single-nucleotide mutation scanning pada satu sekuens DNA. Setiap posisi dimutasi menjadi basa alternatif, lalu model promoter yang sudah dilatih menghitung ulang probabilitas promoter untuk sekuens mutan tersebut.
+
+Fitur ini menjawab:
+
+- probabilitas promoter dari sekuens original,
+- mutasi titik yang paling menurunkan probabilitas promoter,
+- posisi yang paling sensitif menurut model k-mer,
+- k-mer lokal yang berubah akibat mutasi disruptif,
+- ringkasan robustness prediksi terhadap mutasi titik.
+
+Analisis ini adalah lapisan interpretasi di atas classifier yang sudah ada. Fitur ini tidak mengubah training model, tidak memakai mutant sintetis sebagai data training/evaluation, dan tidak digunakan untuk melaporkan akurasi model. Mutant yang dibuat hanya perturbasi post-hoc untuk memahami perilaku model pada satu input.
+
+Run on real test sequences:
+
+```bash
+python scripts/analyze_mutation_sensitivity.py --test-csv data/processed/promoter_all_test.csv --only-promoters --sample-size 5 --model-path models/promoter_kmer_logreg.joblib --vectorizer-path models/promoter_kmer_vectorizer.joblib --k 6 --output-dir reports/mutation_sensitivity
+```
+
+Run on one manual DNA sequence:
+
+```bash
+python scripts/analyze_mutation_sensitivity.py --sequence "ACGT..." --model-path models/promoter_kmer_logreg.joblib --vectorizer-path models/promoter_kmer_vectorizer.joblib --k 6 --output-dir reports/mutation_sensitivity
+```
+
+Outputs:
+
+- `reports/mutation_sensitivity/sensitivity_results.csv`
+- `reports/mutation_sensitivity/position_sensitivity.csv`
+- `reports/mutation_sensitivity/summary.json`
+- `reports/mutation_sensitivity/top_disruptive_mutations.png`
+- `reports/mutation_sensitivity/position_sensitivity.png`
+
+Scientific limitation:
+
+> This mutation sensitivity analysis is a computational interpretation of the trained k-mer model. It identifies model-sensitive positions, not experimentally validated promoter motifs or clinically actionable variants.
+
 ## Notebook Pipeline
 
 Untuk melihat pipeline proyek secara end-to-end dalam satu tempat, gunakan notebook:
@@ -156,6 +202,7 @@ pytest -q
 python scripts/download_dataset.py --dataset InstaDeepAI/nucleotide_transformer_downstream_tasks_revised --task promoter_all --output-dir data/processed
 python scripts/train_baseline.py --train-csv data/processed/promoter_all_train.csv --model-output models/promoter_kmer_logreg.joblib --vectorizer-output models/promoter_kmer_vectorizer.joblib --k 6 --model logistic_regression
 python scripts/evaluate_model.py --test-csv data/processed/promoter_all_test.csv --model-path models/promoter_kmer_logreg.joblib --vectorizer-path models/promoter_kmer_vectorizer.joblib --output-dir reports/evaluation
+python scripts/analyze_mutation_sensitivity.py --test-csv data/processed/promoter_all_test.csv --only-promoters --sample-size 5 --model-path models/promoter_kmer_logreg.joblib --vectorizer-path models/promoter_kmer_vectorizer.joblib --k 6 --output-dir reports/mutation_sensitivity
 streamlit run app.py
 ```
 

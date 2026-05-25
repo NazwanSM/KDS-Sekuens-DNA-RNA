@@ -14,6 +14,10 @@ if str(SRC) not in sys.path:
 from dna_rna_classifier.central_dogma import find_orfs, transcribe, translate_dna, translate_rna  # noqa: E402
 from dna_rna_classifier.features import find_motifs, sequence_feature_summary  # noqa: E402
 from dna_rna_classifier.mutation import analyze_mutations  # noqa: E402
+from dna_rna_classifier.mutation_sensitivity import (  # noqa: E402
+    format_sensitivity_interpretation,
+    scan_mutation_sensitivity,
+)
 from dna_rna_classifier.plotting import composition_dataframe, kmer_dataframe  # noqa: E402
 from dna_rna_classifier.promoter_dataset import (  # noqa: E402
     DATASET_NAME,
@@ -83,6 +87,27 @@ def _train_command() -> str:
         "--model logistic_regression"
     )
 
+def _mutation_sensitivity_command() -> str:
+    """Return the canonical mutation sensitivity command."""
+    return (
+        "python scripts/analyze_mutation_sensitivity.py "
+        "--test-csv data/processed/promoter_all_test.csv "
+        "--only-promoters "
+        "--sample-size 5 "
+        "--model-path models/promoter_kmer_logreg.joblib "
+        "--vectorizer-path models/promoter_kmer_vectorizer.joblib "
+        "--k 6 "
+        "--output-dir reports/mutation_sensitivity"
+    )
+
+def _changed_kmers_label(changed_kmers: dict) -> str:
+    """Compact changed k-mer pairs for table display."""
+    pairs = changed_kmers.get("changed_pairs", [])
+    return "; ".join(
+        f"{pair['start']}-{pair['end']}: {pair['original_kmer']}->{pair['mutated_kmer']}"
+        for pair in pairs
+    )
+
 def main() -> None:
     """Run the Streamlit application."""
     st.set_page_config(page_title="DNA/RNA Promoter Classifier", layout="wide")
@@ -106,8 +131,15 @@ def main() -> None:
         mismatch_score = st.number_input("Mismatch", value=-1, step=1)
         gap_score = st.number_input("Gap", value=-2, step=1)
 
-    tab_analysis, tab_classification, tab_mutation, tab_evaluation, tab_about = st.tabs(
-        ["Sequence Analysis", "Classification", "Mutation Explainer", "Model Evaluation", "About"]
+    tab_analysis, tab_classification, tab_sensitivity, tab_mutation, tab_evaluation, tab_about = st.tabs(
+        [
+            "Sequence Analysis",
+            "Classification",
+            "Promoter Mutation Sensitivity",
+            "Mutation Explainer",
+            "Model Evaluation",
+            "About",
+        ]
     )
 
     with tab_analysis:
@@ -255,6 +287,101 @@ def main() -> None:
             except Exception as exc:  # pragma: no cover - UI guard
                 st.error(f"Unexpected prediction error: {exc}")
 
+    with tab_sensitivity:
+        st.subheader("Promoter Mutation Sensitivity Analyzer")
+        st.write(
+            "This analysis uses in-silico point mutations to measure how much each mutation "
+            "changes the trained model's promoter probability."
+        )
+        st.warning(
+            "Sensitive positions are model-sensitive regions, not experimentally validated biological motifs."
+        )
+        top_n = st.slider("Top disruptive mutations", min_value=5, max_value=30, value=10)
+        show_changed_kmers = st.checkbox("Show changed k-mers", value=False)
+
+        sensitivity_sequence = st.text_area(
+            "DNA sequence for sensitivity scan",
+            value=st.session_state.get("last_sequence", ""),
+            height=140,
+            placeholder="Paste a DNA sequence or load a real test sequence from another tab.",
+        )
+
+        if st.button("Run mutation sensitivity scan"):
+            try:
+                if not model_path.exists() or not vectorizer_path.exists():
+                    st.warning("Model/vectorizer files are not available yet.")
+                    st.code(_train_command(), language="bash")
+                else:
+                    cleaned = _validate_dna_for_promoter_model(sensitivity_sequence)
+                    model = joblib.load(model_path)
+                    vectorizer = joblib.load(vectorizer_path)
+                    scan_result = scan_mutation_sensitivity(cleaned, model, vectorizer, k=k)
+                    original = scan_result["original_prediction"]
+                    robustness = scan_result["robustness_summary"]
+
+                    col1, col2 = st.columns(2)
+                    col1.metric(
+                        "Original predicted label",
+                        f"{original['predicted_label']} ({LABEL_MAPPING.get(original['predicted_label'], 'unknown')})",
+                    )
+                    if original.get("promoter_probability") is not None:
+                        col2.metric("Original promoter probability", f"{original['promoter_probability']:.4f}")
+                    else:
+                        col2.metric("Original promoter score", f"{original['promoter_score']:.4f}")
+
+                    st.write("Robustness summary")
+                    summary_df = pd.DataFrame(
+                        [
+                            {
+                                key: value
+                                for key, value in robustness.items()
+                                if key != "score_type"
+                            }
+                        ]
+                    )
+                    st.dataframe(summary_df, use_container_width=True)
+
+                    top_rows = scan_result["top_disruptive_mutations"][:top_n]
+                    top_df = pd.DataFrame(
+                        [
+                            {
+                                "mutation_label": row["mutation_label"],
+                                "position_1based": row["position_1based"],
+                                "original_base": row["original_base"],
+                                "mutant_base": row["mutant_base"],
+                                "original_probability": row["original_probability"],
+                                "mutant_probability": row["mutant_probability"],
+                                "probability_drop": row["probability_drop"],
+                                "delta_score": row["delta_score"],
+                                "changed_kmers": _changed_kmers_label(row["changed_kmers"]),
+                            }
+                            for row in top_rows
+                        ]
+                    )
+                    if not show_changed_kmers and "changed_kmers" in top_df:
+                        top_df = top_df.drop(columns=["changed_kmers"])
+                    st.write("Top disruptive mutations")
+                    st.dataframe(top_df, use_container_width=True)
+
+                    position_df = pd.DataFrame(scan_result["position_sensitivity"])
+                    if not position_df.empty:
+                        chart_metric = (
+                            "max_probability_drop"
+                            if position_df["max_probability_drop"].notna().any()
+                            else "mean_abs_delta_score"
+                        )
+                        st.write("Position sensitivity chart")
+                        st.line_chart(position_df.set_index("position_1based")[chart_metric])
+
+                    st.write("Interpretation")
+                    st.info(format_sensitivity_interpretation(scan_result))
+                    st.caption("CLI report command:")
+                    st.code(_mutation_sensitivity_command(), language="bash")
+            except ValueError as exc:
+                st.warning(str(exc))
+            except Exception as exc:
+                st.error(f"Unexpected mutation sensitivity error: {exc}")
+
     with tab_mutation:
         st.subheader("Mutation Explainer")
         ref_sequence = st.text_area(
@@ -363,6 +490,8 @@ def main() -> None:
             **Mutation types:** silent mutations preserve amino acids, missense mutations change amino acids, nonsense mutations introduce stop codons, and frameshifts alter the reading frame.
 
             **Sequence alignment:** Needleman-Wunsch global alignment compares two sequences across their full length.
+
+            **Promoter mutation sensitivity:** in-silico point mutations are used only as a post-hoc interpretation layer over the trained k-mer classifier. Sensitive positions are model-sensitive regions, not experimentally validated promoter motifs.
             """
         )
 
