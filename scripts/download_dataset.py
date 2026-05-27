@@ -17,19 +17,23 @@ from dna_rna_classifier.promoter_dataset import (  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the strict dataset downloader."""
+    default_cache_dir = str(ROOT / ".cache" / "huggingface")
+    if os.name == "nt":
+        default_cache_dir = str(Path.home().drive + "\\hf_cache")
     parser = argparse.ArgumentParser(description="Download real promoter_all train/test CSV files.")
     parser.add_argument("--dataset", default=DATASET_NAME, help="Hugging Face dataset name.")
     parser.add_argument("--task", default=TASK_NAME, help="Task to filter, expected promoter_all.")
     parser.add_argument("--output-dir", default="data/processed", help="Directory for exported CSV files.")
     parser.add_argument(
         "--hf-cache-dir",
-        default=str(ROOT / ".cache" / "huggingface"),
+        default=default_cache_dir,
         help="Local Hugging Face cache directory.",
     )
     return parser.parse_args()
 
 def _load_dataset_dict(dataset_name: str, cache_dir: str) -> object:
     """Load the Hugging Face dataset dictionary or raise a clear error."""
+    Path(cache_dir).mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("HF_HOME", cache_dir)
     os.environ.setdefault("HF_HUB_CACHE", str(Path(cache_dir) / "hub"))
     os.environ.setdefault("HF_DATASETS_CACHE", str(Path(cache_dir) / "datasets"))
@@ -44,10 +48,13 @@ def _load_dataset_dict(dataset_name: str, cache_dir: str) -> object:
     try:
         return load_dataset(dataset_name, cache_dir=cache_dir)
     except Exception as exc:
+        import traceback
+
         raise RuntimeError(
             f"Could not load real dataset '{dataset_name}'. "
             "Check your internet connection and Hugging Face access. "
-            "No synthetic fallback will be used."
+            f"Original error: {exc}\n\n"
+            f"Traceback:\n{traceback.format_exc()}"
         ) from exc
 
 def _export_split(dataset_dict: object, split: str, task: str, output_path: Path) -> int:
