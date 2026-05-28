@@ -206,6 +206,8 @@ python scripts/analyze_mutation_sensitivity.py --test-csv data/processed/promote
 streamlit run app.py
 ```
 
+> **Catatan:** `streamlit run app.py` adalah interactive server (blocking). Jalankan manual di terminal terpisah setelah semua langkah di atas selesai, bukan bagian dari pipeline otomatis.
+
 ## Limitations
 
 - This is a baseline k-mer model for academic demonstration.

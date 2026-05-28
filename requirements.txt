@@ -1,8 +1,8 @@
-streamlit
-numpy
-pandas
-scikit-learn
-matplotlib
-joblib
-pytest
-datasets
+streamlit>=1.57.0
+numpy>=1.26.4
+pandas>=2.1.4
+scikit-learn>=1.4.2
+matplotlib>=3.7.5
+joblib>=1.3.2
+pytest>=7.4.4
+datasets>=4.8.4
