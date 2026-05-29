@@ -7,27 +7,21 @@ from types import SimpleNamespace
 import pandas as pd
 
 class FakeDatasetSplit:
-    """Small stand-in for a Hugging Face dataset split."""
 
     def __init__(self, rows: list[dict]) -> None:
-        """Store rows for filtering and dataframe conversion."""
         self._rows = rows
         self.column_names = list(rows[0].keys())
 
     def filter(self, predicate: object) -> "FakeDatasetSplit":
-        """Return rows accepted by a Hugging Face-style predicate."""
         return FakeDatasetSplit([row for row in self._rows if predicate(row)])
 
     def to_pandas(self) -> pd.DataFrame:
-        """Return rows as a dataframe."""
         return pd.DataFrame(self._rows)
 
     def __len__(self) -> int:
-        """Return row count."""
         return len(self._rows)
 
 def _load_download_module() -> object:
-    """Load scripts/download_dataset.py as an importable module."""
     script_path = Path("scripts/download_dataset.py")
     spec = importlib.util.spec_from_file_location("download_dataset_script", script_path)
     assert spec is not None and spec.loader is not None
@@ -36,7 +30,6 @@ def _load_download_module() -> object:
     return module
 
 def test_download_dataset_writes_required_promoter_csvs(monkeypatch: object) -> None:
-    """Downloader exports non-empty train/test CSV files with strict promoter_all schema."""
     module = _load_download_module()
     output_dir = Path(".tmp/test_download_dataset")
     if output_dir.exists():

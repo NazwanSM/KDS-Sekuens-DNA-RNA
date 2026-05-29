@@ -11,29 +11,23 @@ from dna_rna_classifier.mutation_sensitivity import (
 )
 
 class MockVectorizer:
-    """Minimal vectorizer mock for model-dependent tests."""
 
     def transform(self, sequences: list[str]) -> list[str]:
-        """Return sequences unchanged."""
         return sequences
 
 class MockProbabilityModel:
-    """Minimal probability model mock."""
 
     classes_ = np.array([0, 1])
 
     def predict(self, features: list[str]) -> np.ndarray:
-        """Predict promoter when sequence contains more G/C than A/T."""
         return np.array([1 if features[0].count("G") + features[0].count("C") >= 2 else 0])
 
     def predict_proba(self, features: list[str]) -> np.ndarray:
-        """Return a deterministic pseudo-probability."""
         probability = min(0.95, 0.2 + 0.2 * (features[0].count("G") + features[0].count("C")))
         return np.array([[1 - probability, probability]])
 
 
 def test_generate_single_point_mutations_atg() -> None:
-    """ATG produces three alternatives per position and 1-based labels."""
     mutations = generate_single_point_mutations("ATG")
     assert len(mutations) == 9
     assert all(mutation["original_base"] != mutation["mutant_base"] for mutation in mutations)
@@ -44,7 +38,6 @@ def test_generate_single_point_mutations_atg() -> None:
     }
 
 def test_get_changed_kmers_boundaries() -> None:
-    """Affected k-mers are exactly windows containing the mutated position."""
     result = get_changed_kmers("ATGCGT", "ATACGT", position=2, k=3)
     assert result["changed_pairs"] == [
         {"start": 0, "end": 3, "original_kmer": "ATG", "mutated_kmer": "ATA"},
@@ -53,14 +46,12 @@ def test_get_changed_kmers_boundaries() -> None:
     ]
 
 def test_get_promoter_score_with_probability_model() -> None:
-    """Probability models expose class-1 promoter probability."""
     score = get_promoter_score(MockProbabilityModel(), MockVectorizer(), "GCGT")
     assert score["predicted_label"] == 1
     assert score["score_type"] == "probability"
     assert score["promoter_probability"] == score["promoter_score"]
 
 def test_summarize_position_sensitivity() -> None:
-    """Position-level aggregation computes max/mean drops and most disruptive mutation."""
     results = [
         {
             "position": 0,
@@ -94,7 +85,6 @@ def test_summarize_position_sensitivity() -> None:
     assert summary[0]["most_disruptive_mutation_label"] == "A1G"
 
 def test_compute_promoter_robustness_score() -> None:
-    """Robustness summary computes mean/max drops and threshold fractions."""
     results = [
         {
             "original_predicted_label": 1,
@@ -123,7 +113,6 @@ def test_compute_promoter_robustness_score() -> None:
     assert summary["fraction_mutations_flipping_prediction"] == 2 / 3
 
 def test_format_sensitivity_interpretation_cautious() -> None:
-    """Interpretation uses cautious model-sensitive wording."""
     scan_result = {
         "original_prediction": {
             "predicted_label": 1,
