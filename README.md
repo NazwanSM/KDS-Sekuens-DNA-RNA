@@ -193,24 +193,3 @@ Notebook tersebut menuliskan kode Python secara eksplisit untuk:
 - memprediksi satu sekuens dari real test split.
 
 Script di `scripts/` tetap tersedia sebagai alternatif otomatisasi untuk menjalankan langkah yang sama dari terminal.
-
-## Quality Gates
-
-```bash
-python -m compileall src app.py scripts
-pytest -q
-python scripts/download_dataset.py --dataset InstaDeepAI/nucleotide_transformer_downstream_tasks_revised --task promoter_all --output-dir data/processed
-python scripts/train_baseline.py --train-csv data/processed/promoter_all_train.csv --model-output models/promoter_kmer_logreg.joblib --vectorizer-output models/promoter_kmer_vectorizer.joblib --k 6 --model logistic_regression
-python scripts/evaluate_model.py --test-csv data/processed/promoter_all_test.csv --model-path models/promoter_kmer_logreg.joblib --vectorizer-path models/promoter_kmer_vectorizer.joblib --output-dir reports/evaluation
-python scripts/analyze_mutation_sensitivity.py --test-csv data/processed/promoter_all_test.csv --only-promoters --sample-size 5 --model-path models/promoter_kmer_logreg.joblib --vectorizer-path models/promoter_kmer_vectorizer.joblib --k 6 --output-dir reports/mutation_sensitivity
-streamlit run app.py
-```
-
-> **Catatan:** `streamlit run app.py` adalah interactive server (blocking). Jalankan manual di terminal terpisah setelah semua langkah di atas selesai, bukan bagian dari pipeline otomatis.
-
-## Limitations
-
-- This is a baseline k-mer model for academic demonstration.
-- Predictions are not scientifically or clinically definitive.
-- Scientific conclusions require careful dataset understanding, validation protocol, and domain review.
-- The current implementation focuses on the k-mer Logistic Regression baseline and explainable biological analysis modules.

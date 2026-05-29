@@ -11,22 +11,22 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from dna_rna_classifier.central_dogma import find_orfs, transcribe, translate_dna, translate_rna  # noqa: E402
-from dna_rna_classifier.features import find_motifs, sequence_feature_summary  # noqa: E402
-from dna_rna_classifier.mutation import analyze_mutations  # noqa: E402
-from dna_rna_classifier.mutation_sensitivity import (  # noqa: E402
+from dna_rna_classifier.central_dogma import find_orfs, transcribe, translate_dna, translate_rna
+from dna_rna_classifier.features import find_motifs, sequence_feature_summary
+from dna_rna_classifier.mutation import analyze_mutations
+from dna_rna_classifier.mutation_sensitivity import (
     format_sensitivity_interpretation,
     scan_mutation_sensitivity,
 )
-from dna_rna_classifier.plotting import composition_dataframe, kmer_dataframe  # noqa: E402
-from dna_rna_classifier.promoter_dataset import (  # noqa: E402
+from dna_rna_classifier.plotting import composition_dataframe, kmer_dataframe
+from dna_rna_classifier.promoter_dataset import (
     DATASET_NAME,
     LABEL_MAPPING,
     TASK_NAME,
     read_promoter_csv,
 )
-from dna_rna_classifier.validation import detect_sequence_type, parse_fasta_text, validate_sequence  # noqa: E402
-from dna_rna_classifier.visualization_text import (  # noqa: E402
+from dna_rna_classifier.validation import detect_sequence_type, parse_fasta_text, validate_sequence
+from dna_rna_classifier.visualization_text import (
     summarize_mutation_analysis,
     summarize_sequence_features,
     truncate_sequence,
@@ -38,20 +38,17 @@ DEFAULT_TEST_CSV = Path("data/processed/promoter_all_test.csv")
 DEFAULT_REPORT_DIR = Path("reports/evaluation")
 
 def _read_uploaded_file(uploaded_file: object | None) -> str:
-    """Decode an uploaded Streamlit file into text."""
     if uploaded_file is None:
         return ""
     return uploaded_file.getvalue().decode("utf-8")
 
 def _first_sequence_from_input(text: str) -> tuple[str, str]:
-    """Parse text/FASTA input and return the first record id and sequence."""
     records = parse_fasta_text(text)
     if not records:
         raise ValueError("Please enter a DNA/RNA sequence or upload a FASTA file.")
     return records[0]
 
 def _sequence_translation(sequence: str, frame: int) -> tuple[str, str]:
-    """Return transcription text and protein translation for display."""
     sequence_type = detect_sequence_type(sequence)
     if sequence_type == "RNA":
         return "Input is RNA; transcription is not applied.", translate_rna(sequence, frame=frame)
@@ -59,7 +56,6 @@ def _sequence_translation(sequence: str, frame: int) -> tuple[str, str]:
     return rna, translate_dna(sequence, frame=frame)
 
 def _validate_dna_for_promoter_model(sequence: str) -> str:
-    """Validate model input as DNA only."""
     cleaned = sequence.strip().upper()
     if not cleaned:
         raise ValueError("Promoter classification requires a non-empty DNA sequence.")
@@ -68,7 +64,6 @@ def _validate_dna_for_promoter_model(sequence: str) -> str:
     return cleaned
 
 def _download_command() -> str:
-    """Return the canonical dataset download command."""
     return (
         "python scripts/download_dataset.py "
         "--dataset InstaDeepAI/nucleotide_transformer_downstream_tasks_revised "
@@ -77,7 +72,6 @@ def _download_command() -> str:
     )
 
 def _train_command() -> str:
-    """Return the canonical training command."""
     return (
         "python scripts/train_baseline.py "
         "--train-csv data/processed/promoter_all_train.csv "
@@ -88,7 +82,6 @@ def _train_command() -> str:
     )
 
 def _mutation_sensitivity_command() -> str:
-    """Return the canonical mutation sensitivity command."""
     return (
         "python scripts/analyze_mutation_sensitivity.py "
         "--test-csv data/processed/promoter_all_test.csv "
@@ -101,7 +94,6 @@ def _mutation_sensitivity_command() -> str:
     )
 
 def _changed_kmers_label(changed_kmers: dict) -> str:
-    """Compact changed k-mer pairs for table display."""
     pairs = changed_kmers.get("changed_pairs", [])
     return "; ".join(
         f"{pair['start']}-{pair['end']}: {pair['original_kmer']}->{pair['mutated_kmer']}"
@@ -109,7 +101,6 @@ def _changed_kmers_label(changed_kmers: dict) -> str:
     )
 
 def main() -> None:
-    """Run the Streamlit application."""
     st.set_page_config(page_title="DNA/RNA Promoter Classifier", layout="wide")
     st.title("DNA/RNA Sequence Function Classifier + Mutation Explainer")
     st.info("Model trained on real promoter_all data from InstaDeepAI/nucleotide_transformer_downstream_tasks_revised.")
@@ -219,7 +210,7 @@ def main() -> None:
                 st.code(protein or "(no complete codons translated)")
             except ValueError as exc:
                 st.warning(str(exc))
-            except Exception as exc:  # pragma: no cover - UI guard
+            except Exception as exc: 
                 st.error(f"Unexpected analysis error: {exc}")
 
     with tab_classification:
@@ -284,7 +275,7 @@ def main() -> None:
                         st.json({"decision_score": float(model.decision_function(features)[0])})
             except ValueError as exc:
                 st.warning(str(exc))
-            except Exception as exc:  # pragma: no cover - UI guard
+            except Exception as exc:
                 st.error(f"Unexpected prediction error: {exc}")
 
     with tab_sensitivity:
