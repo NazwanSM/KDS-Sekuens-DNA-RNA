@@ -1,5 +1,3 @@
-"""Run promoter mutation sensitivity analysis for one sequence or real test samples."""
-
 from __future__ import annotations
 
 import argparse
@@ -7,28 +5,26 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
-
 import joblib
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import pandas as pd  # noqa: E402
+import matplotlib.pyplot as plt
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from dna_rna_classifier.mutation_sensitivity import (  # noqa: E402
+from dna_rna_classifier.mutation_sensitivity import (
     format_sensitivity_interpretation,
     scan_mutation_sensitivity,
 )
-from dna_rna_classifier.promoter_dataset import TASK_NAME, read_promoter_csv  # noqa: E402
+from dna_rna_classifier.promoter_dataset import TASK_NAME, read_promoter_csv
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Analyze promoter mutation sensitivity.")
     parser.add_argument("--sequence", default=None, help="Optional manual DNA sequence.")
     parser.add_argument("--test-csv", default="data/processed/promoter_all_test.csv")
@@ -43,7 +39,6 @@ def parse_args() -> argparse.Namespace:
 
 
 def _load_model_and_vectorizer(model_path: Path, vectorizer_path: Path) -> tuple[Any, Any]:
-    """Load model and vectorizer, failing loudly when artifacts are missing."""
     if not model_path.exists():
         raise FileNotFoundError(f"Model not found: {model_path}. Run scripts/train_baseline.py first.")
     if not vectorizer_path.exists():
@@ -54,7 +49,6 @@ def _load_model_and_vectorizer(model_path: Path, vectorizer_path: Path) -> tuple
 
 
 def _load_sequences(args: argparse.Namespace) -> list[dict]:
-    """Load one manual sequence or sample real test rows."""
     if args.sequence:
         return [{"sequence_name": "manual_sequence", "true_label": None, "sequence": args.sequence}]
 
@@ -80,7 +74,6 @@ def _load_sequences(args: argparse.Namespace) -> list[dict]:
 
 
 def _flatten_mutation_results(sequence_info: dict, scan_result: dict) -> list[dict]:
-    """Flatten mutation-level results without storing mutated sequences."""
     rows: list[dict] = []
     for result in scan_result["mutation_results"]:
         rows.append(
@@ -108,7 +101,6 @@ def _flatten_mutation_results(sequence_info: dict, scan_result: dict) -> list[di
 
 
 def _flatten_position_results(sequence_info: dict, scan_result: dict) -> list[dict]:
-    """Flatten position-level sensitivity rows."""
     return [
         {
             "sequence_name": sequence_info["sequence_name"],
@@ -120,7 +112,6 @@ def _flatten_position_results(sequence_info: dict, scan_result: dict) -> list[di
 
 
 def _plot_top_disruptive(results_df: pd.DataFrame, output_path: Path) -> None:
-    """Save a bar plot of top disruptive mutations."""
     if results_df.empty:
         return
     metric = "probability_drop" if results_df["probability_drop"].notna().any() else "delta_score"
@@ -143,7 +134,6 @@ def _plot_top_disruptive(results_df: pd.DataFrame, output_path: Path) -> None:
 
 
 def _plot_position_sensitivity(position_df: pd.DataFrame, output_path: Path) -> None:
-    """Save a position sensitivity chart."""
     if position_df.empty:
         return
     metric = (
@@ -166,7 +156,6 @@ def _plot_position_sensitivity(position_df: pd.DataFrame, output_path: Path) -> 
 
 
 def main() -> int:
-    """Run mutation sensitivity analysis and save reports."""
     args = parse_args()
     if args.k <= 0:
         raise ValueError("--k must be positive.")

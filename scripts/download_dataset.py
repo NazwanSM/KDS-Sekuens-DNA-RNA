@@ -9,14 +9,13 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from dna_rna_classifier.promoter_dataset import (  # noqa: E402
+from dna_rna_classifier.promoter_dataset import (
     DATASET_NAME,
     TASK_NAME,
     validate_promoter_dataframe,
 )
 
 def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments for the strict dataset downloader."""
     default_cache_dir = str(ROOT / ".cache" / "huggingface")
     if os.name == "nt":
         default_cache_dir = str(Path.home().drive + "\\hf_cache")
@@ -32,7 +31,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def _load_dataset_dict(dataset_name: str, cache_dir: str) -> object:
-    """Load the Hugging Face dataset dictionary or raise a clear error."""
     Path(cache_dir).mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("HF_HOME", cache_dir)
     os.environ.setdefault("HF_HUB_CACHE", str(Path(cache_dir) / "hub"))
@@ -58,7 +56,6 @@ def _load_dataset_dict(dataset_name: str, cache_dir: str) -> object:
         ) from exc
 
 def _export_split(dataset_dict: object, split: str, task: str, output_path: Path) -> int:
-    """Filter one official split by task, validate it, and write CSV."""
     if split not in dataset_dict:
         raise ValueError(f"Dataset must provide an official '{split}' split.")
 
@@ -76,7 +73,6 @@ def _export_split(dataset_dict: object, split: str, task: str, output_path: Path
     return len(validated)
 
 def main() -> int:
-    """Download and export promoter_all train/test CSV files."""
     args = parse_args()
     if args.dataset != DATASET_NAME:
         raise ValueError(f"This project is configured for dataset '{DATASET_NAME}', got '{args.dataset}'.")

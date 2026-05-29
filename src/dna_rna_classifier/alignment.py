@@ -10,7 +10,6 @@ def needleman_wunsch_matrix(
     mismatch: int = -1,
     gap: int = -2,
 ) -> np.ndarray:
-    """Build and return the Needleman-Wunsch dynamic-programming score matrix."""
     clean1 = validate_sequence(seq1)
     clean2 = validate_sequence(seq2)
     matrix = np.zeros((len(clean1) + 1, len(clean2) + 1), dtype=int)
@@ -36,7 +35,6 @@ def needleman_wunsch(
     mismatch: int = -1,
     gap: int = -2,
 ) -> dict:
-    """Return an optimal global alignment and summary metrics."""
     clean1 = validate_sequence(seq1)
     clean2 = validate_sequence(seq2)
     matrix = needleman_wunsch_matrix(clean1, clean2, match=match, mismatch=mismatch, gap=gap)
@@ -79,7 +77,6 @@ def needleman_wunsch(
     }
 
 def alignment_metrics(aligned_seq1: str, aligned_seq2: str) -> dict:
-    """Calculate matches, mismatches, gaps, and identity percentage."""
     if len(aligned_seq1) != len(aligned_seq2):
         raise ValueError("Aligned sequences must have the same length.")
     if not aligned_seq1:
@@ -105,7 +102,6 @@ def alignment_metrics(aligned_seq1: str, aligned_seq2: str) -> dict:
     }
 
 def format_alignment(aligned_seq1: str, aligned_seq2: str, line_length: int = 60) -> str:
-    """Format two aligned sequences into readable blocks with match markers."""
     if len(aligned_seq1) != len(aligned_seq2):
         raise ValueError("Aligned sequences must have the same length.")
     if line_length <= 0:

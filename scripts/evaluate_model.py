@@ -8,8 +8,8 @@ import joblib
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-from sklearn.metrics import (  # noqa: E402
+import matplotlib.pyplot as plt
+from sklearn.metrics import (
     accuracy_score,
     classification_report,
     confusion_matrix,
@@ -21,10 +21,9 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from dna_rna_classifier.promoter_dataset import DATASET_NAME, TASK_NAME, read_promoter_csv  # noqa: E402
+from dna_rna_classifier.promoter_dataset import DATASET_NAME, TASK_NAME, read_promoter_csv 
 
 def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Evaluate a promoter_all k-mer baseline model.")
     parser.add_argument("--test-csv", default="data/processed/promoter_all_test.csv")
     parser.add_argument("--model-path", default="models/promoter_kmer_logreg.joblib")
@@ -33,7 +32,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def _save_confusion_matrix_png(matrix: list[list[int]], output_path: Path) -> None:
-    """Save a small confusion matrix plot."""
     fig, ax = plt.subplots(figsize=(4.5, 4))
     image = ax.imshow(matrix, cmap="Blues")
     ax.set_xticks([0, 1], labels=["0 non-promoter", "1 promoter"])
@@ -49,7 +47,6 @@ def _save_confusion_matrix_png(matrix: list[list[int]], output_path: Path) -> No
     plt.close(fig)
 
 def main() -> int:
-    """Evaluate a saved model/vectorizer pair and write report artifacts."""
     args = parse_args()
     test_df = read_promoter_csv(args.test_csv, task=TASK_NAME)
     model_path = Path(args.model_path)

@@ -75,43 +75,36 @@ STANDARD_RNA_CODON_TABLE = {
 }
 
 def dna_to_rna(dna: str) -> str:
-    """Convert a DNA sequence to RNA by replacing T with U."""
     cleaned = validate_sequence(dna)
     if detect_sequence_type(cleaned) == "RNA":
         raise ValueError("Expected DNA sequence, received RNA sequence.")
     return cleaned.replace("T", "U")
 
 def rna_to_dna(rna: str) -> str:
-    """Convert an RNA sequence to DNA by replacing U with T."""
     cleaned = validate_sequence(rna)
     if detect_sequence_type(cleaned) == "DNA":
         raise ValueError("Expected RNA sequence, received DNA sequence.")
     return cleaned.replace("U", "T")
 
 def get_complement(sequence: str) -> str:
-    """Return the nucleotide complement of a DNA or RNA sequence."""
     cleaned = validate_sequence(sequence)
     sequence_type = detect_sequence_type(cleaned)
     table = RNA_COMPLEMENT if sequence_type == "RNA" else DNA_COMPLEMENT
     return cleaned.translate(table)
 
 def get_reverse_complement(sequence: str) -> str:
-    """Return the reverse complement of a DNA or RNA sequence."""
     return get_complement(sequence)[::-1]
 
 def transcribe(dna: str) -> str:
-    """Transcribe DNA to RNA."""
     return dna_to_rna(dna)
 
 def split_codons(sequence: str, frame: int = 0) -> list[str]:
-    """Split a sequence into complete codons from the selected reading frame."""
     if frame not in {0, 1, 2}:
         raise ValueError("Reading frame must be 0, 1, or 2.")
     cleaned = validate_sequence(sequence)
     return [cleaned[i : i + 3] for i in range(frame, len(cleaned) - 2, 3)]
 
 def translate_rna(rna: str, frame: int = 0, stop_at_stop: bool = True) -> str:
-    """Translate RNA into a protein sequence using the standard codon table."""
     cleaned = validate_sequence(rna)
     if detect_sequence_type(cleaned) == "DNA":
         raise ValueError("Expected RNA sequence for RNA translation.")
@@ -125,11 +118,9 @@ def translate_rna(rna: str, frame: int = 0, stop_at_stop: bool = True) -> str:
     return "".join(amino_acids)
 
 def translate_dna(dna: str, frame: int = 0, stop_at_stop: bool = True) -> str:
-    """Transcribe DNA to RNA and translate it into a protein sequence."""
     return translate_rna(dna_to_rna(dna), frame=frame, stop_at_stop=stop_at_stop)
 
 def find_orfs(dna_or_rna: str, min_length: int = 30) -> list[dict]:
-    """Find forward-strand ORFs in all three reading frames."""
     if min_length < 0:
         raise ValueError("min_length must be non-negative.")
 

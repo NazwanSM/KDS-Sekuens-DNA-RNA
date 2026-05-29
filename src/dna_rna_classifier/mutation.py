@@ -13,7 +13,6 @@ def _translate_sequence(sequence: str, frame: int = 0) -> str:
     return translate_dna(sequence, frame=frame, stop_at_stop=True)
 
 def compare_sequences(reference: str, mutated: str) -> list[dict]:
-    """Compare two sequences and return substitutions, insertions, and deletions."""
     clean_ref = validate_sequence(reference)
     clean_mut = validate_sequence(mutated)
     alignment = needleman_wunsch(clean_ref, clean_mut)
@@ -67,7 +66,6 @@ def compare_sequences(reference: str, mutated: str) -> list[dict]:
     return mutations
 
 def classify_point_mutation(reference_codon: str, mutated_codon: str) -> dict:
-    """Classify one codon change as silent, missense, nonsense, or unknown."""
     ref_rna = _to_rna_codon(reference_codon)
     mut_rna = _to_rna_codon(mutated_codon)
     if len(ref_rna) != 3 or len(mut_rna) != 3:
@@ -93,7 +91,6 @@ def classify_point_mutation(reference_codon: str, mutated_codon: str) -> dict:
     }
 
 def analyze_mutations(reference: str, mutated: str, frame: int = 0) -> dict:
-    """Analyze sequence-level and protein-level mutation effects."""
     if frame not in {0, 1, 2}:
         raise ValueError("Reading frame must be 0, 1, or 2.")
 

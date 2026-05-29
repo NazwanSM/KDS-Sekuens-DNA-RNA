@@ -6,13 +6,11 @@ RNA_SYMBOLS = set("AUGCN")
 WHITESPACE_RE = re.compile(r"\s+")
 
 def clean_sequence(sequence: str) -> str:
-    """Return an uppercase sequence with all whitespace removed."""
     if not isinstance(sequence, str):
         raise TypeError("Sequence must be a string.")
     return WHITESPACE_RE.sub("", sequence).upper()
 
 def detect_sequence_type(sequence: str) -> str:
-    """Detect whether a sequence is DNA, RNA, ambiguous, or invalid."""
     cleaned = clean_sequence(sequence)
     if not cleaned:
         return "INVALID"
@@ -32,7 +30,6 @@ def detect_sequence_type(sequence: str) -> str:
     return "INVALID"
 
 def validate_sequence(sequence: str, allow_ambiguous: bool = True) -> str:
-    """Clean and validate a DNA/RNA sequence, returning the cleaned sequence."""
     cleaned = clean_sequence(sequence)
     sequence_type = detect_sequence_type(cleaned)
     if sequence_type == "INVALID":
@@ -45,11 +42,6 @@ def validate_sequence(sequence: str, allow_ambiguous: bool = True) -> str:
     return cleaned
 
 def parse_fasta_text(text: str) -> list[tuple[str, str]]:
-    """Parse FASTA text into ``(record_id, sequence)`` pairs.
-
-    Plain sequence text without FASTA headers is accepted and returned with the
-    record id ``sequence_1``.
-    """
     if not isinstance(text, str):
         raise TypeError("FASTA input must be a string.")
 

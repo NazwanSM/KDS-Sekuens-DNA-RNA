@@ -1,17 +1,12 @@
-"""Promoter mutation sensitivity analysis for a trained k-mer classifier."""
-
 from __future__ import annotations
-
 from statistics import mean
 from typing import Any
-
 from .validation import clean_sequence
 
 DNA_ALPHABET = set("ACGTN")
 
 
 def generate_single_point_mutations(sequence: str, alphabet: str = "ACGT") -> list[dict]:
-    """Generate all single-nucleotide substitutions for a DNA sequence."""
     cleaned = _validate_dna_sequence(sequence)
     mutation_alphabet = _validate_mutation_alphabet(alphabet)
     mutations: list[dict] = []
@@ -35,7 +30,6 @@ def generate_single_point_mutations(sequence: str, alphabet: str = "ACGT") -> li
 
 
 def get_promoter_score(model: Any, vectorizer: Any, sequence: str) -> dict:
-    """Predict promoter class and promoter score for one DNA sequence."""
     cleaned = _validate_dna_sequence(sequence)
     features = vectorizer.transform([cleaned])
     predicted_label = int(model.predict(features)[0])
@@ -73,7 +67,6 @@ def get_changed_kmers(
     position: int,
     k: int,
 ) -> dict:
-    """Return k-mers whose windows include a mutated zero-based position."""
     original = _validate_dna_sequence(original_sequence)
     mutated = _validate_dna_sequence(mutated_sequence)
     if len(original) != len(mutated):
@@ -120,7 +113,6 @@ def scan_mutation_sensitivity(
     k: int = 6,
     max_mutations: int | None = None,
 ) -> dict:
-    """Scan all single-point mutations and measure model-score sensitivity."""
     cleaned = _validate_dna_sequence(sequence)
     if k <= 0:
         raise ValueError("k must be positive.")
@@ -195,7 +187,6 @@ def scan_mutation_sensitivity(
 
 
 def summarize_position_sensitivity(mutation_results: list[dict]) -> list[dict]:
-    """Aggregate mutation impact by sequence position."""
     grouped: dict[int, list[dict]] = {}
     for result in mutation_results:
         grouped.setdefault(int(result["position"]), []).append(result)
@@ -236,7 +227,6 @@ def summarize_position_sensitivity(mutation_results: list[dict]) -> list[dict]:
 
 
 def compute_promoter_robustness_score(mutation_results: list[dict]) -> dict:
-    """Compute a cautious robustness summary for in-silico mutations."""
     if not mutation_results:
         return {
             "n_mutations": 0,
@@ -286,7 +276,6 @@ def compute_promoter_robustness_score(mutation_results: list[dict]) -> dict:
 
 
 def format_sensitivity_interpretation(scan_result: dict) -> str:
-    """Return a cautious human-readable interpretation of a sensitivity scan."""
     original = scan_result.get("original_prediction", {})
     top_disruptive = scan_result.get("top_disruptive_mutations", [])
     positions = scan_result.get("position_sensitivity", [])
@@ -347,7 +336,6 @@ def format_sensitivity_interpretation(scan_result: dict) -> str:
 
 
 def _validate_dna_sequence(sequence: str) -> str:
-    """Validate a non-empty DNA sequence using A/C/G/T/N only."""
     cleaned = clean_sequence(sequence)
     if not cleaned:
         raise ValueError("DNA sequence must be non-empty.")
@@ -357,7 +345,6 @@ def _validate_dna_sequence(sequence: str) -> str:
 
 
 def _validate_mutation_alphabet(alphabet: str) -> list[str]:
-    """Validate and normalize mutation alphabet order."""
     cleaned = clean_sequence(alphabet).replace("N", "")
     if not cleaned:
         raise ValueError("Mutation alphabet must contain at least one A/C/G/T base.")
@@ -367,7 +354,6 @@ def _validate_mutation_alphabet(alphabet: str) -> list[str]:
 
 
 def _class_index(model: Any, class_label: int) -> int:
-    """Find a model class index or raise a clear error."""
     classes = [int(label) for label in getattr(model, "classes_", [])]
     if class_label not in classes:
         raise ValueError(f"Model classes must include class {class_label}. Found: {classes}")
@@ -375,19 +361,16 @@ def _class_index(model: Any, class_label: int) -> int:
 
 
 def _fraction_above(values: list[float], threshold: float) -> float:
-    """Return the fraction of values strictly above a threshold."""
     if not values:
         return 0.0
     return sum(1 for value in values if value > threshold) / len(values)
 
 
 def _none_to_negative_infinity(value: float | None) -> float:
-    """Sort helper that treats None as negative infinity."""
     return float(value) if value is not None else float("-inf")
 
 
 def _infer_original_label(mutation_results: list[dict]) -> int:
-    """Infer original label from original probability if present."""
     first = mutation_results[0]
     probability = first.get("original_probability")
     if probability is not None:

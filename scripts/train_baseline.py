@@ -16,8 +16,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from dna_rna_classifier.modeling import KmerTokenizer  # noqa: E402
-from dna_rna_classifier.promoter_dataset import (  # noqa: E402
+from dna_rna_classifier.modeling import KmerTokenizer
+from dna_rna_classifier.promoter_dataset import (
     DATASET_NAME,
     LABEL_MAPPING,
     TASK_NAME,
@@ -25,7 +25,6 @@ from dna_rna_classifier.promoter_dataset import (  # noqa: E402
 )
 
 def parse_args() -> argparse.Namespace:
-    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Train a promoter_all k-mer baseline model.")
     parser.add_argument("--train-csv", default="data/processed/promoter_all_train.csv")
     parser.add_argument("--model-output", default="models/promoter_kmer_logreg.joblib")
@@ -41,7 +40,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def build_model(model_name: str, random_state: int) -> object:
-    """Build a supported scikit-learn classifier."""
     if model_name == "logistic_regression":
         return LogisticRegression(max_iter=1000, random_state=random_state)
     if model_name == "linear_svm":
@@ -51,7 +49,6 @@ def build_model(model_name: str, random_state: int) -> object:
     raise ValueError(f"Unsupported model type: {model_name}")
 
 def main() -> int:
-    """Train and persist model, vectorizer, and metadata."""
     args = parse_args()
     if args.k <= 0:
         raise ValueError("k-mer size must be positive.")

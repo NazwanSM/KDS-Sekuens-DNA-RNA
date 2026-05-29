@@ -9,12 +9,6 @@ LABEL_MAPPING = {0: "non-promoter", 1: "promoter"}
 DNA_ALPHABET = set("ACGTN")
 
 def validate_promoter_dataframe(df: pd.DataFrame, task: str = TASK_NAME) -> pd.DataFrame:
-    """Validate and standardize promoter_all rows.
-
-    The returned dataframe contains exactly ``sequence``, ``label``, ``task``,
-    and ``name`` columns. Invalid data raises ``ValueError`` immediately so the
-    pipeline never falls back to misleading synthetic data.
-    """
     missing = [column for column in REQUIRED_COLUMNS if column not in df.columns]
     if missing:
         raise ValueError(f"Missing required column(s): {missing}. Available columns: {list(df.columns)}")
@@ -54,7 +48,6 @@ def validate_promoter_dataframe(df: pd.DataFrame, task: str = TASK_NAME) -> pd.D
     return working[REQUIRED_COLUMNS]
 
 def read_promoter_csv(path: str | Path, task: str = TASK_NAME) -> pd.DataFrame:
-    """Read and validate a promoter_all CSV file."""
     csv_path = Path(path)
     if not csv_path.exists():
         raise FileNotFoundError(
@@ -64,14 +57,12 @@ def read_promoter_csv(path: str | Path, task: str = TASK_NAME) -> pd.DataFrame:
     return validate_promoter_dataframe(pd.read_csv(csv_path), task=task)
 
 def _normalize_sequence(value: object) -> str:
-    """Normalize one DNA sequence value."""
     if not isinstance(value, str):
         return ""
     return value.strip().upper()
 
 
 def _normalize_label(value: object) -> int:
-    """Normalize one binary label value."""
     if isinstance(value, bool):
         raise ValueError("Boolean labels are not accepted.")
     if isinstance(value, int):
